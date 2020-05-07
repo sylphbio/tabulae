@@ -1,0 +1,20 @@
+(pontiff :name tabulae
+         :version {0 1 0}
+         :pontiff-version {0 1 0}
+         :synopsis ""
+         :authors []
+         :license "BSD-3"
+         :repository (pontiff:repository :name tabulae :vcs git :url "")
+         :category uncategorized
+         :tags []
+         :source-dir "src"
+         :test-dir "test"
+         :csc-flags ["-keyword-style" "prefix" "-specialize" "-local" "-lfa2" "-inline" "-inline-global" "-optimize-leaf-routines"]
+         :cc clang
+         :ld lld
+         :artifacts [(pontiff:executable :name tabulae :root tabulae)]
+         :tests [(pontiff:executable :name unit :root test.unit) (pontiff:executable :name integration :root test.integration)]
+         :dependencies []
+         :resolver alice
+         :egg-dependencies [test]
+         :egg-resolver chicken-install)
