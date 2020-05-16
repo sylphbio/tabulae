@@ -27,6 +27,7 @@
 ; I want to eventually define everything I like in the Data.List repitoire for listlikes
 ; and then drop the asterisks and replace the functions in scheme/base
 ; XXX also everything cleanly admits a ->list function
+; XXX functions to add: chop, last
 (define (length* ll)
   (cond ((list? ll) (length ll))
         ((string? ll) (string-length ll))
@@ -119,6 +120,7 @@
         ((p? (head* ll)) (cons* (head* ll) (filter* p? (tail* ll))))
         (else (filter* p? (tail* ll)))))
 
+; XXX TODO FIXME using pairs is fundamentally a mistake and this should be a two-item list
 (define (zip* ll1 ll2)
   (if (or (null*? ll1) (null*? ll2))
       '()
