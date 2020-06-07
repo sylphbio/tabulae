@@ -5,6 +5,7 @@
 (import chicken.type)
 (import chicken.string)
 (import chicken.format)
+(import chicken.foreign)
 (import chicken.irregex)
 (import srfi-4)
 
@@ -28,6 +29,10 @@
 ; and then drop the asterisks and replace the functions in scheme/base
 ; XXX also everything cleanly admits a ->list function
 ; XXX functions to add: chop, last
+; XXX want to support vectors. also I realized my thing is actually like, stringlike and listlike
+; the difference is between like, a structure of containers whose types cannot change, vs one which can
+; so you could actually have a string map, but it must be a function Char -> Char) *not* a -> b
+; maybe call this sequential and traversible? idk it doesn't matter until I have real typeclasses
 (define (length* ll)
   (cond ((list? ll) (length ll))
         ((string? ll) (string-length ll))
@@ -185,5 +190,15 @@
            (map (lambda (n) (cons n (irregex-match-substring m n)))
                 (srfi1:iota (+ (irregex-match-num-submatches m) 1)))
            '())))
+
+; chicken only has seconds since epoch or milliseconds since boot
+; and srfi-19 has ten million dependencies
+(define current-microseconds (foreign-lambda* unsigned-integer64 () #<<EOM
+#include <time.h>
+struct timespec t;
+clock_gettime(CLOCK_REALTIME, &t);
+C_return(t.tv_sec * 1000000 + t.tv_nsec / 1000);
+EOM
+))
 
 )
