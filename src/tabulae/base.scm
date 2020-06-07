@@ -7,6 +7,11 @@
 (import chicken.format)
 (import chicken.foreign)
 (import chicken.irregex)
+(import chicken.process)
+(import chicken.process-context)
+(import chicken.port)
+(import chicken.file)
+(import chicken.io)
 (import srfi-4)
 
 (import (prefix srfi-1 srfi1:))
@@ -200,5 +205,32 @@ clock_gettime(CLOCK_REALTIME, &t);
 C_return(t.tv_sec * 1000000 + t.tv_nsec / 1000);
 EOM
 ))
+
+; similar to process-run: with args treats cmd as a binary to invoke, without args treats it as a shellout
+; also vars is an alist to match the chicken functions
+; unlike process-run, we *always* use execve rather than execvp after the fork
+; we *merge* environments rather than overwrite 
+; and we *always* use /bin/sh rather than ever going through the user shell
+; together the goal is that process-create covers all uses and behaves much more uniformly than process-run
+(define (process-create cmd #!optional args (vars '()))
+  (let ((env (foldl (lambda (acc e) (alist-update (car e) (cdr e) acc equal?))
+                    (get-environment-variables)
+                    vars))
+        (pid (process-fork)))
+       (cond ((not (= pid 0)) pid)
+             (args (process-execute cmd args env))
+             (else (process-execute "/bin/sh" `("-c" ,cmd) env)))))
+
+; very simple, writes a string to disk truncating on open
+; XXX nice thing would be to write to a temp file and relink but need to decide how to impl mv
+(define (save-file path str)
+  (call-with-output-file path (lambda (p) (write-string str #f p))))
+
+; reads a file into a string and returns it, properly handling the empty file
+(define (load-file path)
+  (and (file-exists? path)
+       (file-readable? path)
+       (let ((s (call-with-input-file path (lambda (p) (read-string #f p)))))
+            (if (eof-object? s) "" s))))
 
 )
