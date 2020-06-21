@@ -20,5 +20,6 @@
                  (pontiff:executable :name integration :root test.integration)]
          :dependencies []
          :resolver alice
+         :lib-dependencies []
          :egg-dependencies [test srfi-1]
          :egg-resolver chicken-install)
