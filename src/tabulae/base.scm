@@ -16,6 +16,11 @@
 
 (import (prefix srfi-1 srfi1:))
 
+#>
+#include <time.h>
+#include <unistd.h>
+<#
+
 (define (listlike? ll)
   (or (list? ll) (string? ll) (u8vector? ll)))
 
@@ -199,7 +204,6 @@
 ; chicken only has seconds since epoch or milliseconds since boot
 ; and srfi-19 has ten million dependencies
 (define current-microseconds (foreign-lambda* unsigned-integer64 () #<<EOM
-#include <time.h>
 struct timespec t;
 clock_gettime(CLOCK_REALTIME, &t);
 C_return(t.tv_sec * 1000000 + t.tv_nsec / 1000);
@@ -232,5 +236,7 @@ EOM
        (file-readable? path)
        (let ((s (call-with-input-file path (lambda (p) (read-string #f p)))))
             (if (eof-object? s) "" s))))
+
+(define usleep (foreign-lambda int usleep unsigned-int))
 
 )
