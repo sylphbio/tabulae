@@ -247,14 +247,16 @@ EOM
 ; * symbol: ix => (exn ix)
 ; * symbol list: (ix parse) => (exn ix parse)
 ; * kind/key/val list: ((ix key 1) (parse key 2)) => (exn ix parse)
-(define (mk-condition module line subtype message)
+(define (mk-condition module line trace subtype message)
   (let ((extract-ln (lambda (s) (string->number (car (reverse (string-split s ":"))))))
         (st (cond ((symbol? subtype) `((,subtype)))
                   ((and (list? subtype) (all* symbol? subtype)) (map list subtype))
-                  (else subtype))))
+                  (else subtype)))
+        (trace^ (map (lambda (v) (vector-ref v 0)) (butlast trace))))
        (apply condition `((exn message ,message
                                module ,module
-                               line ,(extract-ln line))
+                               line ,(extract-ln line)
+                               trace ,trace^)
                           ,@st))))
 
 ; condition constructor that captures module and line number
@@ -266,7 +268,8 @@ EOM
          (printargs (cdddr e))
          (%mk-condition (r 'mk-condition))
          (%current-module (r 'current-module))
+         (%get-call-chain (r 'get-call-chain))
          (%sprintf (r 'sprintf)))
-        `(,%mk-condition (,%current-module) ,(get-line-number e) ,subtype (,%sprintf ,msg ,@printargs))))))
+        `(,%mk-condition (,%current-module) ,(get-line-number e) (,%get-call-chain) ,subtype (,%sprintf ,msg ,@printargs))))))
 
 )
