@@ -12,6 +12,9 @@
 (import chicken.port)
 (import chicken.file)
 (import chicken.io)
+(import chicken.condition)
+(import chicken.syntax)
+(import chicken.module)
 (import srfi-4)
 
 (import (prefix srfi-1 srfi1:))
@@ -237,6 +240,33 @@ EOM
        (let ((s (call-with-input-file path (lambda (p) (read-string #f p)))))
             (if (eof-object? s) "" s))))
 
+; nothing like this in chicken. remember micro = million = six zeros
 (define usleep (foreign-lambda int usleep unsigned-int))
+
+; helper function for exn. subtype can be
+; * symbol: ix => (exn ix)
+; * symbol list: (ix parse) => (exn ix parse)
+; * kind/key/val list: ((ix key 1) (parse key 2)) => (exn ix parse)
+(define (mk-condition module line subtype message)
+  (let ((extract-ln (lambda (s) (string->number (car (reverse (string-split s ":"))))))
+        (st (cond ((symbol? subtype) `((,subtype)))
+                  ((and (list? subtype) (all* symbol? subtype)) (map list subtype))
+                  (else subtype))))
+       (apply condition `((exn message ,message
+                               module ,module
+                               line ,(extract-ln line))
+                          ,@st))))
+
+; condition constructor that captures module and line number
+; this, plus raise and guard from srfi-34, are the whole of our exception api
+; libraries should export a function named `exn?` that returns #t for library-specific exceptions
+(define-syntax exn (er-macro-transformer (lambda (e r c)
+  (let* ((subtype (cadr e))
+         (msg (caddr e))
+         (printargs (cdddr e))
+         (%mk-condition (r 'mk-condition))
+         (%current-module (r 'current-module))
+         (%sprintf (r 'sprintf)))
+        `(,%mk-condition (,%current-module) ,(get-line-number e) ,subtype (,%sprintf ,msg ,@printargs))))))
 
 )
