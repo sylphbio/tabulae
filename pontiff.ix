@@ -21,5 +21,6 @@
          :dependencies []
          :resolver alice
          :lib-dependencies []
-         :egg-dependencies [test srfi-1]
+         :egg-dependencies [srfi-1]
+         :egg-test-dependencies [test]
          :egg-resolver chicken-install)
